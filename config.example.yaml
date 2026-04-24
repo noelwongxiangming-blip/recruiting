@@ -1,0 +1,148 @@
+# Startup Radar — configuration
+#
+# Copy this file to `config.yaml` and edit.
+# The interactive setup skill (run `claude` then `/setup`) will generate this for you.
+
+user:
+  name: "Your Name"
+  # Short background blurb — used by the DeepDive skill when tailoring fit rationales.
+  # Example: "Software engineer, 6 years backend, looking for early-stage infra startups."
+  background: "Describe yourself in one sentence."
+
+# ---------------------------------------------------------------------------
+# What you're looking for
+# ---------------------------------------------------------------------------
+targets:
+  # Job titles you want to match (case-insensitive substring).
+  # Replace these with whatever roles you're targeting — e.g. "software engineer",
+  # "product manager", "founding engineer", "data scientist", "designer".
+  roles:
+    - software engineer
+    - product manager
+    - founding engineer
+    - data scientist
+    - designer
+
+  # Titles to exclude. Remove these if you WANT senior roles,
+  # or add "intern" / "junior" if you want to skip entry-level.
+  seniority_exclusions:
+    - intern
+    - vp
+    - director
+    - head of
+
+  # Locations you're open to (case-insensitive substring).
+  # Replace these with whatever cities/regions you care about.
+  locations:
+    - new york
+    - nyc
+    - san francisco
+    - bay area
+    - london
+    - berlin
+    - remote
+
+  # Industry / product keywords — a company must match at least one.
+  # Leave empty to include all industries.
+  industries:
+    - ai
+    - artificial intelligence
+    - machine learning
+    - developer tools
+    - saas
+
+  # Minimum funding stage. Options: pre-seed, seed, series-a, series-b, series-c, any
+  min_stage: series-a
+
+  # Seed rounds at or above this amount (in millions USD) are also included.
+  large_seed_threshold_musd: 50
+
+# ---------------------------------------------------------------------------
+# Where to pull signal from
+# ---------------------------------------------------------------------------
+sources:
+  rss:
+    enabled: true
+    feeds:
+      - name: TechCrunch Venture
+        url: https://techcrunch.com/category/venture/feed/
+      - name: VentureBeat
+        url: https://venturebeat.com/feed/
+      - name: Crunchbase News
+        url: https://news.crunchbase.com/feed/
+
+  hackernews:
+    enabled: true
+    # Algolia HN search queries — one entry per query.
+    queries:
+      - "raised Series A"
+      - "raised Series B"
+      - "announces funding"
+    lookback_hours: 48
+
+  sec_edgar:
+    enabled: true
+    # SEC Form D filings — authoritative for US private raises. Free, no auth.
+    # industry_sic_codes: narrow by SIC code; leave empty to include all.
+    industry_sic_codes: []
+    min_amount_musd: 5
+    lookback_days: 7
+
+  # Optional — requires Google OAuth. See setup skill.
+  gmail:
+    enabled: false
+    label: "Startup Funding"
+    # Senders to route to parsers. Add one per newsletter you subscribe to.
+    senders: {}
+
+# ---------------------------------------------------------------------------
+# Where to write results
+# ---------------------------------------------------------------------------
+output:
+  sqlite:
+    enabled: true
+    path: startup_radar.db
+
+  # Optional — requires Google OAuth.
+  google_sheets:
+    enabled: false
+    sheet_id: ""
+
+# ---------------------------------------------------------------------------
+# LinkedIn connections (optional)
+# ---------------------------------------------------------------------------
+connections:
+  enabled: false
+  # Export from https://www.linkedin.com/mypreferences/d/download-my-data
+  csv_path: ""
+
+# ---------------------------------------------------------------------------
+# DeepDive skill — fit scoring rubric
+# ---------------------------------------------------------------------------
+deepdive:
+  # Weight each factor — higher = more important to you.
+  fit_factors:
+    industry_match: high
+    funding_stage: high
+    location: high
+    role_fit_signals: high
+    founder_pedigree: medium
+    vc_tier: medium
+
+  # VCs you'd consider "top tier" — used by DeepDive scoring.
+  tier1_vcs:
+    - a16z
+    - Sequoia
+    - Accel
+    - Benchmark
+    - Index
+    - Founders Fund
+    - Khosla
+    - GV
+    - Greylock
+    - Coatue
+
+  # Score thresholds
+  thresholds:
+    strong: 7.5
+    moderate: 5.0
