@@ -2,8 +2,8 @@ name: Daily Startup Radar
 
 on:
   schedule:
-    # 15:00 UTC daily = 08:00 PT / 11:00 ET. Edit to taste.
-    - cron: '0 15 * * *'
+    # 07:00 UTC daily = 08:00 BST / 07:00 GMT. Edit to taste.
+    - cron: '0 7 * * *'
   workflow_dispatch: {}
 
 jobs:
