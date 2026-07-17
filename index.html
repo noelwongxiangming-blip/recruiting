@@ -148,7 +148,7 @@
       <h2>Destinations redeemable — miles required (one-way, Economy)</h2>
       <span class="meta" id="chartMeta"></span>
     </div>
-    <p class="desc">Destinations confirmed in published coverage for the selected travel month. The 15% discount applies on travel to and/or from each destination, so each is redeemable in both directions. Miles shown are per direction, discount included. Taxes and fees are payable separately.</p>
+    <p class="desc">Destinations confirmed in published coverage for the selected travel month. The 15% discount applies on travel <b>to and/or from</b> each destination — most city pairs are discounted both ways, but some routes are discounted in one direction only, and eligibility is per specific flight number. Miles shown are per direction, discount included. Taxes and fees are payable separately.</p>
     <div class="tabs" role="tablist" id="tabs"></div>
     <div class="chart" id="chart"></div>
     <div class="axis" id="axisWrap"><span></span><div class="ticks" id="axis"></div><span></span></div>
@@ -159,7 +159,7 @@
       <h2 id="routesTitle">Redeemable routes</h2>
       <span class="meta" id="routesMeta"></span>
     </div>
-    <p class="desc">Every redeemable route for the selected month, shown in both directions. Miles are per person, per direction, in Scoot Economy.</p>
+    <p class="desc">Confirmed city pairs for the selected month, shown as both directional routes. ⚠ Directions are not always symmetric: the discount is tied to specific flight numbers, and some routes are discounted one way only or carry blackout dates — verify the direction you need on flyscoot.com before transferring miles. Miles are per person, per direction, in Scoot Economy.</p>
     <div class="routes" id="routes"></div>
   </section>
 
@@ -168,7 +168,7 @@
       <h2>Route availability by travel month</h2>
       <span class="meta">cell = discounted miles per direction when offered</span>
     </div>
-    <p class="desc">Each row is a city pair redeemable in both directions (e.g. Singapore – Malacca and Malacca – Singapore). Line-ups rotate monthly: July 2026 dropped Australia but added China and India routes; August restored Australia. Full route lists each month are on flyscoot.com — this matrix tracks routes confirmed in coverage.</p>
+    <p class="desc">Each row is a city pair, typically redeemable in both directions (e.g. Singapore – Malacca and Malacca – Singapore) but occasionally one direction only — the eligible flight numbers and blackout dates per route are listed on flyscoot.com each month. Line-ups rotate monthly: July 2026 dropped Australia but added China and India routes; August restored Australia. This matrix tracks routes confirmed in coverage.</p>
     <div class="mx"><table class="matrix" id="matrix"></table></div>
   </section>
 
@@ -182,6 +182,8 @@
       <li>Strictly non-cancellable and non-changeable once booked</li>
       <li>Airport taxes, surcharges and add-ons payable in cash</li>
       <li>Seats limited, first-come first-served; blackout dates apply on some routes</li>
+      <li>Discount is tied to specific flight numbers — some routes are discounted in one direction only; book one-way legs if only one direction is discounted</li>
+      <li>Spontaneous Escapes awards can't be combined with regular Saver/Advantage awards in one booking</li>
     </ul>
   </section>
 
@@ -348,7 +350,7 @@ function renderRoutes(e, ds) {
   document.getElementById("routes").innerHTML = ds.map(d => `
     <div class="route">
       <span class="pair"><b>Singapore – ${d.city}</b><span class="rev">${d.city} – Singapore</span></span>
-      <span class="m"><b>${fmt(d.miles)}</b> miles<br><span style="font-size:0.72rem">each direction</span></span>
+      <span class="m"><b>${fmt(d.miles)}</b> miles<br><span style="font-size:0.72rem">per direction, where offered</span></span>
     </div>`).join("");
 }
 
