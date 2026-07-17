@@ -84,7 +84,7 @@
   .panel .desc { font-size: 0.82rem; color: var(--text-muted); margin-bottom: 14px; }
 
   .chart { position: relative; }
-  .row { display: grid; grid-template-columns: 130px 1fr 74px; align-items: center; gap: 10px; padding: 3px 0; border-radius: 6px; }
+  .row { display: grid; grid-template-columns: 200px 1fr 74px; align-items: center; gap: 10px; padding: 3px 0; border-radius: 6px; }
   .row:hover { background: color-mix(in srgb, var(--series-1) 8%, transparent); }
   .row .lbl { font-size: 0.83rem; color: var(--text-primary); text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .row .lbl .rg { display: block; font-size: 0.68rem; color: var(--text-muted); }
@@ -92,7 +92,16 @@
   .row .bar { position: absolute; left: 0; top: 3px; height: 12px; background: var(--series-1);
               border-radius: 0 4px 4px 0; min-width: 3px; }
   .row .val { font-size: 0.82rem; font-variant-numeric: tabular-nums; color: var(--text-secondary); }
-  .axis { display: grid; grid-template-columns: 130px 1fr 74px; gap: 10px; margin-top: 6px; }
+  .axis { display: grid; grid-template-columns: 200px 1fr 74px; gap: 10px; margin-top: 6px; }
+
+  .routes { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 8px 18px; margin-top: 4px; }
+  .route { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; padding: 7px 10px;
+           border: 1px solid var(--grid); border-radius: 8px; font-size: 0.83rem; }
+  .route:hover { border-color: var(--series-1); }
+  .route .pair b { font-weight: 600; }
+  .route .pair .rev { display: block; color: var(--text-secondary); }
+  .route .m { font-variant-numeric: tabular-nums; color: var(--text-secondary); white-space: nowrap; }
+  .route .m b { color: var(--text-primary); }
   .axis .ticks { position: relative; height: 16px; border-top: 1px solid var(--baseline); font-size: 0.7rem; color: var(--text-muted); }
   .axis .ticks span { position: absolute; top: 2px; transform: translateX(-50%); }
 
@@ -139,7 +148,7 @@
       <h2>Destinations redeemable — miles required (one-way, Economy)</h2>
       <span class="meta" id="chartMeta"></span>
     </div>
-    <p class="desc">Highlighted destinations confirmed in published coverage for the selected travel month. Miles shown include the 15% discount. Taxes and fees are payable separately.</p>
+    <p class="desc">Destinations confirmed in published coverage for the selected travel month. The 15% discount applies on travel to and/or from each destination, so each is redeemable in both directions. Miles shown are per direction, discount included. Taxes and fees are payable separately.</p>
     <div class="tabs" role="tablist" id="tabs"></div>
     <div class="chart" id="chart"></div>
     <div class="axis" id="axisWrap"><span></span><div class="ticks" id="axis"></div><span></span></div>
@@ -147,10 +156,19 @@
 
   <section class="panel">
     <div class="ph">
-      <h2>Destination availability by travel month</h2>
-      <span class="meta">cell = discounted miles when offered</span>
+      <h2 id="routesTitle">Redeemable routes</h2>
+      <span class="meta" id="routesMeta"></span>
     </div>
-    <p class="desc">Line-ups rotate monthly. July 2026 dropped Australia but added China and India routes; August restored Australia. Full route lists each month are on flyscoot.com — this matrix tracks destinations confirmed in coverage.</p>
+    <p class="desc">Every redeemable route for the selected month, shown in both directions. Miles are per person, per direction, in Scoot Economy.</p>
+    <div class="routes" id="routes"></div>
+  </section>
+
+  <section class="panel">
+    <div class="ph">
+      <h2>Route availability by travel month</h2>
+      <span class="meta">cell = discounted miles per direction when offered</span>
+    </div>
+    <p class="desc">Each row is a city pair redeemable in both directions (e.g. Singapore – Malacca and Malacca – Singapore). Line-ups rotate monthly: July 2026 dropped Australia but added China and India routes; August restored Australia. Full route lists each month are on flyscoot.com — this matrix tracks routes confirmed in coverage.</p>
     <div class="mx"><table class="matrix" id="matrix"></table></div>
   </section>
 
@@ -276,9 +294,9 @@ function renderTiles() {
       <div class="note">one-way Economy, 15% off Saver</div>
     </div>
     <div class="tile">
-      <div class="k">Destinations tracked</div>
-      <div class="v">${allDests.size}</div>
-      <div class="note">across ${EDITIONS.length} editions since May 2026</div>
+      <div class="k">Routes tracked</div>
+      <div class="v">${allDests.size * 2}</div>
+      <div class="note">${allDests.size} city pairs · both directions · ${EDITIONS.length} editions since May 2026</div>
     </div>`;
 }
 
@@ -304,7 +322,7 @@ function renderChart() {
   document.getElementById("chartMeta").textContent = `book ${e.book} · travel ${e.travel}`;
   document.getElementById("chart").innerHTML = ds.map(d => `
     <div class="row" data-city="${d.city}" data-region="${d.region}" data-miles="${d.miles}">
-      <span class="lbl">${d.city}<span class="rg">${d.region}</span></span>
+      <span class="lbl">Singapore – ${d.city}<span class="rg">${d.city} – Singapore · ${d.region}</span></span>
       <span class="track"><span class="bar" style="width:${(d.miles / max * 100).toFixed(1)}%"></span></span>
       <span class="val">${fmt(d.miles)}</span>
     </div>`).join("");
@@ -315,10 +333,23 @@ function renderChart() {
 
   document.querySelectorAll("#chart .row").forEach(r => {
     const move = ev => showTT(
-      `<b>${r.dataset.city} · ${r.dataset.region}</b>${fmt(+r.dataset.miles)} miles one-way (15% off Saver)<br>${e.label}: book ${e.book}`, ev);
+      `<b>Singapore – ${r.dataset.city} · ${r.dataset.city} – Singapore</b>${r.dataset.region} · ${fmt(+r.dataset.miles)} miles each direction (15% off Saver)<br>${e.label}: book ${e.book}`, ev);
     r.addEventListener("mousemove", move);
     r.addEventListener("mouseleave", hideTT);
   });
+
+  renderRoutes(e, ds);
+}
+
+function renderRoutes(e, ds) {
+  document.getElementById("routesTitle").textContent = `Redeemable routes — ${e.label}`;
+  document.getElementById("routesMeta").textContent =
+    `${ds.length * 2} routes (${ds.length} city pairs, both directions)`;
+  document.getElementById("routes").innerHTML = ds.map(d => `
+    <div class="route">
+      <span class="pair"><b>Singapore – ${d.city}</b><span class="rev">${d.city} – Singapore</span></span>
+      <span class="m"><b>${fmt(d.miles)}</b> miles<br><span style="font-size:0.72rem">each direction</span></span>
+    </div>`).join("");
 }
 
 function renderMatrix() {
@@ -338,7 +369,7 @@ function renderMatrix() {
       return `<td>${d ? `<span class="cell on" data-tip="${c.city} · ${e.label}: ${fmt(d.miles)} miles">${fmt(d.miles)}</span>`
                       : `<span class="cell off">—</span>`}</td>`;
     }).join("");
-    return `<tr><th>${c.city}<span class="rg">${c.region}</span></th>${cells}</tr>`;
+    return `<tr><th>Singapore ⇄ ${c.city}<span class="rg">${c.region}</span></th>${cells}</tr>`;
   }).join("");
   document.getElementById("matrix").innerHTML = head + `<tbody>${body}</tbody>`;
 
