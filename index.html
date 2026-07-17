@@ -1,0 +1,352 @@
+<title>KrisFlyer Spontaneous Escapes · Scoot Tracker</title>
+<style>
+  .viz-root {
+    color-scheme: light;
+    --surface-1: #fcfcfb;
+    --page: #f9f9f7;
+    --text-primary: #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted: #898781;
+    --grid: #e1e0d9;
+    --baseline: #c3c2b7;
+    --border: rgba(11,11,11,0.10);
+    --series-1: #2a78d6;
+    --series-1-soft: #cde2fb;
+    --good: #0ca30c;
+    --good-text: #006300;
+    --warning: #fab219;
+    --critical: #d03b3b;
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: var(--page);
+    color: var(--text-primary);
+    min-height: 100vh;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) .viz-root {
+      color-scheme: dark;
+      --surface-1: #1a1a19;
+      --page: #0d0d0d;
+      --text-primary: #ffffff;
+      --text-secondary: #c3c2b7;
+      --text-muted: #898781;
+      --grid: #2c2c2a;
+      --baseline: #383835;
+      --border: rgba(255,255,255,0.10);
+      --series-1: #3987e5;
+      --series-1-soft: #1c3a5e;
+      --good-text: #0ca30c;
+    }
+  }
+  :root[data-theme="dark"] .viz-root {
+    color-scheme: dark;
+    --surface-1: #1a1a19;
+    --page: #0d0d0d;
+    --text-primary: #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted: #898781;
+    --grid: #2c2c2a;
+    --baseline: #383835;
+    --border: rgba(255,255,255,0.10);
+    --series-1: #3987e5;
+    --series-1-soft: #1c3a5e;
+    --good-text: #0ca30c;
+  }
+
+  .viz-root * { box-sizing: border-box; margin: 0; }
+  .wrap { max-width: 1060px; margin: 0 auto; padding: 28px 20px 56px; }
+
+  header.hd { margin-bottom: 20px; }
+  .hd h1 { font-size: 1.35rem; font-weight: 700; letter-spacing: -0.01em; }
+  .hd .sub { color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px; max-width: 68ch; }
+
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; margin-bottom: 20px; }
+  .tile { background: var(--surface-1); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
+  .tile .k { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); margin-bottom: 6px; }
+  .tile .v { font-size: 1.55rem; font-weight: 700; line-height: 1.1; }
+  .tile .v small { font-size: 0.85rem; font-weight: 500; color: var(--text-secondary); }
+  .tile .note { font-size: 0.78rem; color: var(--text-secondary); margin-top: 5px; }
+  .badge { display: inline-flex; align-items: center; gap: 6px; font-size: 0.78rem; font-weight: 600; padding: 2px 9px; border-radius: 999px; border: 1px solid var(--border); }
+  .badge.open  { color: var(--good-text); }
+  .badge.open::before { content: "●"; color: var(--good); }
+  .badge.closed { color: var(--text-muted); }
+  .badge.closed::before { content: "●"; color: var(--baseline); }
+
+  .tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+  .tab { border: 1px solid var(--border); background: var(--surface-1); color: var(--text-secondary);
+         border-radius: 999px; padding: 6px 14px; font: inherit; font-size: 0.85rem; cursor: pointer; }
+  .tab:hover { border-color: var(--baseline); }
+  .tab[aria-selected="true"] { background: var(--series-1); border-color: var(--series-1); color: #fff; font-weight: 600; }
+
+  .panel { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; margin-bottom: 20px; }
+  .panel h2 { font-size: 0.95rem; font-weight: 700; }
+  .panel .ph { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 4px; }
+  .panel .meta { font-size: 0.8rem; color: var(--text-secondary); }
+  .panel .desc { font-size: 0.82rem; color: var(--text-muted); margin-bottom: 14px; }
+
+  .chart { position: relative; }
+  .row { display: grid; grid-template-columns: 130px 1fr 74px; align-items: center; gap: 10px; padding: 3px 0; border-radius: 6px; }
+  .row:hover { background: color-mix(in srgb, var(--series-1) 8%, transparent); }
+  .row .lbl { font-size: 0.83rem; color: var(--text-primary); text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .row .lbl .rg { display: block; font-size: 0.68rem; color: var(--text-muted); }
+  .row .track { position: relative; height: 18px; }
+  .row .bar { position: absolute; left: 0; top: 3px; height: 12px; background: var(--series-1);
+              border-radius: 0 4px 4px 0; min-width: 3px; }
+  .row .val { font-size: 0.82rem; font-variant-numeric: tabular-nums; color: var(--text-secondary); }
+  .axis { display: grid; grid-template-columns: 130px 1fr 74px; gap: 10px; margin-top: 6px; }
+  .axis .ticks { position: relative; height: 16px; border-top: 1px solid var(--baseline); font-size: 0.7rem; color: var(--text-muted); }
+  .axis .ticks span { position: absolute; top: 2px; transform: translateX(-50%); }
+
+  .tt { position: fixed; z-index: 10; pointer-events: none; background: var(--surface-1); border: 1px solid var(--border);
+        border-radius: 8px; box-shadow: 0 4px 14px rgba(0,0,0,0.18); padding: 8px 11px; font-size: 0.78rem;
+        color: var(--text-secondary); display: none; max-width: 240px; }
+  .tt b { color: var(--text-primary); display: block; margin-bottom: 2px; }
+
+  .mx { overflow-x: auto; }
+  table.matrix { border-collapse: collapse; width: 100%; min-width: 560px; }
+  .matrix th, .matrix td { padding: 7px 10px; font-size: 0.82rem; text-align: center; }
+  .matrix thead th { color: var(--text-muted); font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; border-bottom: 1px solid var(--baseline); }
+  .matrix tbody th { text-align: left; font-weight: 500; color: var(--text-primary); border-bottom: 1px solid var(--grid); white-space: nowrap; }
+  .matrix tbody th .rg { color: var(--text-muted); font-size: 0.7rem; margin-left: 6px; }
+  .matrix td { border-bottom: 1px solid var(--grid); font-variant-numeric: tabular-nums; }
+  .matrix td .cell { display: inline-block; min-width: 62px; padding: 3px 8px; border-radius: 6px; }
+  .matrix td .on  { background: var(--series-1-soft); color: var(--text-primary); font-weight: 600; }
+  .matrix td .off { color: var(--text-muted); }
+
+  .terms { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px 22px; padding: 0; list-style: none; }
+  .terms li { font-size: 0.83rem; color: var(--text-secondary); padding-left: 18px; position: relative; }
+  .terms li::before { content: "—"; position: absolute; left: 0; color: var(--text-muted); }
+
+  .src { font-size: 0.78rem; color: var(--text-muted); line-height: 1.7; }
+  .src a { color: var(--series-1); text-decoration: none; }
+  .src a:hover { text-decoration: underline; }
+
+  .foot { font-size: 0.75rem; color: var(--text-muted); margin-top: 18px; }
+</style>
+
+<div class="viz-root">
+<div class="wrap">
+  <header class="hd">
+    <h1>KrisFlyer Spontaneous Escapes — Scoot</h1>
+    <p class="sub">Tracking Scoot award-flight redemptions under KrisFlyer Spontaneous Escapes since Scoot joined the
+    programme in May 2026. 15% off Saver award rates, Economy only, one-way per person. Awards are announced on the
+    15th of each month for travel the following month.</p>
+  </header>
+
+  <section class="tiles" id="tiles"></section>
+
+  <section class="panel">
+    <div class="ph">
+      <h2>Destinations redeemable — miles required (one-way, Economy)</h2>
+      <span class="meta" id="chartMeta"></span>
+    </div>
+    <p class="desc">Highlighted destinations confirmed in published coverage for the selected travel month. Miles shown include the 15% discount. Taxes and fees are payable separately.</p>
+    <div class="tabs" role="tablist" id="tabs"></div>
+    <div class="chart" id="chart"></div>
+    <div class="axis" id="axisWrap"><span></span><div class="ticks" id="axis"></div><span></span></div>
+  </section>
+
+  <section class="panel">
+    <div class="ph">
+      <h2>Destination availability by travel month</h2>
+      <span class="meta">cell = discounted miles when offered</span>
+    </div>
+    <p class="desc">Line-ups rotate monthly. July 2026 dropped Australia but added China and India routes; August restored Australia. Full route lists each month are on flyscoot.com — this matrix tracks destinations confirmed in coverage.</p>
+    <div class="mx"><table class="matrix" id="matrix"></table></div>
+  </section>
+
+  <section class="panel">
+    <h2 style="margin-bottom:12px">Key terms</h2>
+    <ul class="terms">
+      <li>15% off KrisFlyer Saver award rates on selected Scoot flights (vs 30% on Singapore Airlines)</li>
+      <li>Book on flyscoot.com or the Scoot app, logged in with your KrisFlyer account</li>
+      <li>Booking window: 15th to end of the month prior to travel</li>
+      <li>Scoot Economy only — ScootPlus and Super seats excluded</li>
+      <li>Strictly non-cancellable and non-changeable once booked</li>
+      <li>Airport taxes, surcharges and add-ons payable in cash</li>
+      <li>Seats limited, first-come first-served; blackout dates apply on some routes</li>
+    </ul>
+  </section>
+
+  <section class="panel">
+    <h2 style="margin-bottom:10px">Sources</h2>
+    <p class="src">
+      <a href="https://www.flyscoot.com/en/krisflyer/spontaneous-escapes">Scoot — KrisFlyer Spontaneous Escapes (official, full monthly list)</a><br>
+      <a href="https://mainlymiles.com/2026/04/15/krisflyer-spontaneous-escapes-may-2026/">Mainly Miles — May 2026 (Scoot joins)</a> ·
+      <a href="https://mainlymiles.com/2026/05/15/scoot-spontaneous-escapes-june-2026/">June 2026</a> ·
+      <a href="https://mainlymiles.com/2026/06/15/scoot-spontaneous-escapes-july-2026/">July 2026</a> ·
+      <a href="https://mainlymiles.com/2026/07/15/scoot-spontaneous-escapes-august-2026/">August 2026</a><br>
+      <a href="https://milelion.com/2026/04/15/krisflyer-spontaneous-escapes-for-may-2026-announced-now-with-scoot/">The MileLion — May 2026</a> ·
+      <a href="https://milelion.com/2026/07/15/scoot-krisflyer-spontaneous-escapes-for-august-2026-announced/">August 2026</a> ·
+      <a href="https://suitesmile.com/krisflyer-spontaneous-escapes/">Suitesmile — running tracker</a>
+    </p>
+  </section>
+
+  <p class="foot">Data compiled 17 Jul 2026. Highlighted destinations only — each month's full redeemable list (incl. China, India, Indonesia and Malaysia routes) is published on flyscoot.com when the edition opens. To add a month, append an entry to <code>EDITIONS</code> in this file.</p>
+</div>
+<div class="tt" id="tt"></div>
+</div>
+
+<script>
+const EDITIONS = [
+  {
+    id: "2026-05", label: "May 2026", travel: "1–31 May 2026", book: "15–30 Apr 2026",
+    bookEnd: "2026-04-30", note: "Scoot's first Spontaneous Escapes edition",
+    destinations: [
+      { city: "Kuala Lumpur", region: "Malaysia",  miles: 1275 },
+      { city: "Malacca",      region: "Malaysia",  miles: 1275 },
+      { city: "Phuket",       region: "Thailand",  miles: 2125 },
+    ],
+  },
+  {
+    id: "2026-06", label: "Jun 2026", travel: "1–30 Jun 2026", book: "15–31 May 2026",
+    bookEnd: "2026-05-31", note: "Japan and Australia long-haul added",
+    destinations: [
+      { city: "Kuala Lumpur", region: "Malaysia",  miles: 1275 },
+      { city: "Bali",         region: "Indonesia", miles: 3825 },
+      { city: "Taipei",       region: "Taiwan",    miles: 5525 },
+      { city: "Osaka",        region: "Japan",     miles: 10625 },
+      { city: "Sydney",       region: "Australia", miles: 10625 },
+    ],
+  },
+  {
+    id: "2026-07", label: "Jul 2026", travel: "1–31 Jul 2026", book: "15–30 Jun 2026",
+    bookEnd: "2026-06-30", note: "Australia dropped; deep China list and new Indian cities added",
+    destinations: [
+      { city: "Malacca",      region: "Malaysia",  miles: 1275 },
+      { city: "Phuket",       region: "Thailand",  miles: 2125 },
+      { city: "Osaka",        region: "Japan",     miles: 10625 },
+      { city: "Tokyo",        region: "Japan",     miles: 10625 },
+    ],
+  },
+  {
+    id: "2026-08", label: "Aug 2026", travel: "1–31 Aug 2026", book: "15–31 Jul 2026",
+    bookEnd: "2026-07-31", note: "Australia returns; China and India routes continue",
+    destinations: [
+      { city: "Malacca",      region: "Malaysia",  miles: 1275 },
+      { city: "Phuket",       region: "Thailand",  miles: 2125 },
+      { city: "Perth",        region: "Australia", miles: 5525 },
+      { city: "Taipei",       region: "Taiwan",    miles: 5525 },
+      { city: "Tokyo",        region: "Japan",     miles: 10625 },
+      { city: "Sydney",       region: "Australia", miles: 10625 },
+    ],
+  },
+];
+
+const TODAY = new Date();
+const fmt = n => n.toLocaleString("en-SG");
+
+function bookingOpen(e) {
+  const end = new Date(e.bookEnd + "T23:59:59");
+  const start = new Date(end.getFullYear(), end.getMonth(), 15);
+  return TODAY >= start && TODAY <= end;
+}
+
+const current = EDITIONS.filter(bookingOpen).at(-1) ?? EDITIONS.at(-1);
+let selected = current.id;
+
+const tt = document.getElementById("tt");
+function showTT(html, ev) {
+  tt.innerHTML = html; tt.style.display = "block";
+  const pad = 14, w = tt.offsetWidth, h = tt.offsetHeight;
+  let x = ev.clientX + pad, y = ev.clientY + pad;
+  if (x + w > innerWidth - 8) x = ev.clientX - w - pad;
+  if (y + h > innerHeight - 8) y = ev.clientY - h - pad;
+  tt.style.left = x + "px"; tt.style.top = y + "px";
+}
+const hideTT = () => tt.style.display = "none";
+
+function renderTiles() {
+  const open = bookingOpen(current);
+  const allDests = new Set(EDITIONS.flatMap(e => e.destinations.map(d => d.city)));
+  const minNow = Math.min(...current.destinations.map(d => d.miles));
+  document.getElementById("tiles").innerHTML = `
+    <div class="tile">
+      <div class="k">Current edition</div>
+      <div class="v">${current.label}</div>
+      <div class="note"><span class="badge ${open ? "open" : "closed"}">${open ? "Booking open" : "Booking closed"}</span></div>
+    </div>
+    <div class="tile">
+      <div class="k">Book by</div>
+      <div class="v">${current.book.split("–")[1]}</div>
+      <div class="note">travel ${current.travel}</div>
+    </div>
+    <div class="tile">
+      <div class="k">Awards from</div>
+      <div class="v">${fmt(minNow)} <small>miles</small></div>
+      <div class="note">one-way Economy, 15% off Saver</div>
+    </div>
+    <div class="tile">
+      <div class="k">Destinations tracked</div>
+      <div class="v">${allDests.size}</div>
+      <div class="note">across ${EDITIONS.length} editions since May 2026</div>
+    </div>`;
+}
+
+function renderTabs() {
+  document.getElementById("tabs").innerHTML = EDITIONS.map(e =>
+    `<button class="tab" role="tab" aria-selected="${e.id === selected}" data-id="${e.id}">${e.label}</button>`
+  ).join("");
+  document.querySelectorAll(".tab").forEach(b =>
+    b.addEventListener("click", () => { selected = b.dataset.id; renderTabs(); renderChart(); }));
+}
+
+function niceTicks(max) {
+  const step = max > 8000 ? 2500 : max > 3000 ? 1000 : 500;
+  const out = []; for (let v = 0; v <= max; v += step) out.push(v);
+  return out;
+}
+
+function renderChart() {
+  const e = EDITIONS.find(x => x.id === selected);
+  const ds = [...e.destinations].sort((a, b) => a.miles - b.miles);
+  const max = Math.max(...ds.map(d => d.miles)) * 1.05;
+
+  document.getElementById("chartMeta").textContent = `book ${e.book} · travel ${e.travel}`;
+  document.getElementById("chart").innerHTML = ds.map(d => `
+    <div class="row" data-city="${d.city}" data-region="${d.region}" data-miles="${d.miles}">
+      <span class="lbl">${d.city}<span class="rg">${d.region}</span></span>
+      <span class="track"><span class="bar" style="width:${(d.miles / max * 100).toFixed(1)}%"></span></span>
+      <span class="val">${fmt(d.miles)}</span>
+    </div>`).join("");
+
+  const ticks = niceTicks(max);
+  document.getElementById("axis").innerHTML = ticks.map(v =>
+    `<span style="left:${(v / max * 100).toFixed(1)}%">${v === 0 ? "0" : fmt(v)}</span>`).join("");
+
+  document.querySelectorAll("#chart .row").forEach(r => {
+    const move = ev => showTT(
+      `<b>${r.dataset.city} · ${r.dataset.region}</b>${fmt(+r.dataset.miles)} miles one-way (15% off Saver)<br>${e.label}: book ${e.book}`, ev);
+    r.addEventListener("mousemove", move);
+    r.addEventListener("mouseleave", hideTT);
+  });
+}
+
+function renderMatrix() {
+  const cities = [];
+  EDITIONS.forEach(e => e.destinations.forEach(d => {
+    if (!cities.some(c => c.city === d.city)) cities.push({ city: d.city, region: d.region });
+  }));
+  cities.sort((a, b) => {
+    const m = c => Math.min(...EDITIONS.flatMap(e => e.destinations.filter(d => d.city === c.city).map(d => d.miles)));
+    return m(a) - m(b) || a.city.localeCompare(b.city);
+  });
+
+  const head = `<thead><tr><th style="text-align:left">Destination</th>${EDITIONS.map(e => `<th>${e.label}</th>`).join("")}</tr></thead>`;
+  const body = cities.map(c => {
+    const cells = EDITIONS.map(e => {
+      const d = e.destinations.find(x => x.city === c.city);
+      return `<td>${d ? `<span class="cell on" data-tip="${c.city} · ${e.label}: ${fmt(d.miles)} miles">${fmt(d.miles)}</span>`
+                      : `<span class="cell off">—</span>`}</td>`;
+    }).join("");
+    return `<tr><th>${c.city}<span class="rg">${c.region}</span></th>${cells}</tr>`;
+  }).join("");
+  document.getElementById("matrix").innerHTML = head + `<tbody>${body}</tbody>`;
+
+  document.querySelectorAll(".cell.on").forEach(el => {
+    el.addEventListener("mousemove", ev => showTT(`<b>${el.dataset.tip.split(":")[0]}</b>${el.dataset.tip.split(": ")[1]} one-way`, ev));
+    el.addEventListener("mouseleave", hideTT);
+  });
+}
+
+renderTiles(); renderTabs(); renderChart(); renderMatrix();
+</script>
